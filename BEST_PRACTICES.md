@@ -61,7 +61,7 @@ For classification, embed both your labelled examples and the new items with `ta
 Google's format for documents is `title: {title} | text: {content}`, with `title: none` when there is no title. A real title helps — use the page title, section heading, or (for code) the **file name**.
 
 - One title for the whole request: send `"title": "..."` with `task: document`.
-- A different title per document: build the prefix yourself and turn the automatic one off with `"prompt": ""`:
+- A different title per document: build the prefix yourself and turn the automatic one off with `"prompt": ""` (see [Writing the prefix yourself](#writing-the-prefix-yourself-prompt)):
 
 ```bash
 curl -s localhost:3000/v1/embeddings -H 'content-type: application/json' -d '{
@@ -76,6 +76,39 @@ curl -s localhost:3000/v1/embeddings -H 'content-type: application/json' -d '{
 ### Custom tasks
 
 Anything that is not one of the canonical tasks is looked up among the checkpoint's own prompt names (`Reranking`, `BitextMining`, `Summarization`, `InstructionRetrieval`, …) and otherwise becomes `task: {your text} | query: `. Stick to the documented tasks unless you have measured that a custom one helps — the model was trained on the documented ones.
+
+### Writing the prefix yourself: `prompt`
+
+`prompt` is an extension of this server (not part of GAISe's contract): a literal prefix that **replaces** the one `task` would add, on every text input of the request. For everyday indexing and searching, `task` is all you need — reach for `prompt` only when `task` can't express what you want:
+
+| You want… | Send |
+|---|---|
+| A different title on each document | `"prompt": ""` and write `title: {title} \| text: …` into each input |
+| Several tasks in one call | `"prompt": ""` and write each input's own prefix |
+| Text that is already prefixed (e.g. stored that way) | `"prompt": ""` |
+| Your own task description | `"prompt": "task: {description} \| query: "` (untrained — measure it) |
+
+`"prompt": ""` means **embed the text exactly as sent**. A prompt identical to a task's prefix gives exactly the same vector as that task (checked: cosine 1.0), so the two styles can be mixed in one index.
+
+```bash
+# several tasks in one call — each input carries its own prefix
+curl -s localhost:3000/v1/embeddings -H 'content-type: application/json' -d '{
+  "prompt": "",
+  "input": [
+    "task: search result | query: what causes the northern lights?",
+    "task: question answering | query: how much protein should a woman eat per day?",
+    "title: Aurora borealis | text: The northern lights are caused by charged particles from the sun…"
+  ]
+}'
+```
+
+On `/v1/embeddings/contents`:
+
+- `task` prefixes **text-only items only**; media items never get it.
+- `"prompt": ""` keeps text items verbatim, next to media items.
+- A **non-empty** `prompt` is also placed in front of media items (before their parts). The model card trains media *without* prefixes, so treat that as experimental — for example a text + image *query* (`"prompt": "task: search result | query: "` on a `parts` item with "shoes like these but in red" and a photo). Compare it with the unprefixed item on your own data before adopting it.
+
+More `prompt` requests are in [`examples/http/embeddings.http`](examples/http/embeddings.http).
 
 ### Through the Gemini-style endpoint
 

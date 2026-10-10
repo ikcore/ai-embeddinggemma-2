@@ -30,13 +30,102 @@ Content-Type: application/json
   "dimensions": 256
 }
 
-### Literal prefix instead of a task ("" = none)
+### ---------------------------------------------------------------------------
+### `prompt` (extension): a literal prefix that replaces the task's.
+### Normally `task` is all you need. Use `prompt` when task can't express it:
+### per-document titles, several tasks in one call, or text already prefixed.
+### ---------------------------------------------------------------------------
+
+### prompt = the same prefix `task` would add (these two give identical vectors)
 POST {{base}}/v1/embeddings
 Content-Type: application/json
 
 {
   "prompt": "task: code retrieval | query: ",
   "input": "parse a date string in rust"
+}
+
+### …equivalent to:
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "task": "code_query",
+  "input": "parse a date string in rust"
+}
+
+### prompt "" = embed verbatim: a different title on every document
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "prompt": "",
+  "input": [
+    "title: Aurora borealis | text: The northern lights are caused by charged particles from the sun hitting the upper atmosphere.",
+    "title: Protein requirements | text: The CDC's average requirement of protein for women ages 19 to 70 is 46 grams per day.",
+    "title: none | text: A document with no title."
+  ]
+}
+
+### prompt "" = embed verbatim: code files titled with their file names
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "prompt": "",
+  "input": [
+    "title: src/date.rs | text: pub fn parse_date(s: &str) -> Result<NaiveDate> { NaiveDate::parse_from_str(s, \"%Y-%m-%d\") }",
+    "title: src/http.rs | text: pub async fn get(url: &str) -> Result<String> { reqwest::get(url).await?.text().await }"
+  ]
+}
+
+### prompt "" = embed verbatim: several tasks in ONE call (each input carries its own prefix)
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "prompt": "",
+  "input": [
+    "task: search result | query: what causes the northern lights?",
+    "task: question answering | query: how much protein should a woman eat per day?",
+    "task: fact checking | query: The northern lights are caused by the moon.",
+    "task: sentence similarity | query: A man is playing a guitar."
+  ]
+}
+
+### prompt = your own task description (not one the model was trained on — measure before relying on it)
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "prompt": "task: legal statute lookup | query: ",
+  "input": "Can my landlord keep my deposit for normal wear and tear?"
+}
+
+### Contents: prompt "" keeps text items verbatim next to media items
+POST {{base}}/v1/embeddings/contents
+Content-Type: application/json
+
+{
+  "prompt": "",
+  "input": [
+    { "type": "text", "text": "title: Red square | text: a plain red square, 48 pixels wide" },
+    { "type": "image", "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAaElEQVR4nM3OMQEAIAzAsFIh3PjXgxj+GaBRkHX3oURiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJMbfgekBARwBggoDZ0MAAAAASUVORK5CYII=" }
+  ]
+}
+
+### Contents: a text + image QUERY — `task` never prefixes media items, a non-empty prompt does
+# (placed before the item's parts; the model card trains media without prefixes, so this is
+#  experimental — compare against the plain item on your own data)
+POST {{base}}/v1/embeddings/contents
+Content-Type: application/json
+
+{
+  "prompt": "task: search result | query: ",
+  "input": [ { "type": "parts", "parts": [
+    { "type": "text", "text": "shoes like these but in red " },
+    { "type": "image", "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAaElEQVR4nM3OMQEAIAzAsFIh3PjXgxj+GaBRkHX3oURiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJMbfgekBARwBggoDZ0MAAAAASUVORK5CYII=" }
+  ] } ]
 }
 
 ### Contents: an image (base64 or data: URL; GAISe's byte arrays work too)
