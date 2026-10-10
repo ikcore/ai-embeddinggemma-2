@@ -1,0 +1,57 @@
+# syntax=docker/dockerfile:1
+# CUDA image: glibc binary + only the CUDA libraries candle links (cublas,
+# cublasLt, curand, nvrtc) on Debian slim, with ffmpeg and pdftoppm. libcuda
+# itself comes from the host driver via the NVIDIA container toolkit.
+#
+#   docker build -f docker/Dockerfile.cuda -t gemini-embed-api:cuda . --build-arg CUDA_COMPUTE_CAP=89
+#   docker run --rm --gpus all -p 3000:3000 -v gemini-embed-models:/models gemini-embed-api:cuda
+#
+# `--gpus all` (or `gpus: all` in compose) is required: without an attached GPU
+# the binary fails at start with "libcuda.so.1: cannot open shared object file".
+#
+# Build args:
+#   CUDA_VERSION      toolkit used to build (default 12.6.3; the host driver must support it)
+#   CUDA_COMPUTE_CAP  target GPU (80 = A100, 86 = RTX 30xx, 89 = RTX 40xx, 90 = H100)
+
+ARG CUDA_VERSION=12.6.3
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04 AS build
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+ENV PATH=/root/.cargo/bin:$PATH
+ARG CUDA_COMPUTE_CAP=89
+ENV CUDA_COMPUTE_CAP=${CUDA_COMPUTE_CAP}
+WORKDIR /src
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/src/target \
+    cargo build --release --features cuda -p gemini_embed_api \
+    && cp target/release/gemini_embed_api /gemini_embed_api
+# Exactly the CUDA shared objects the binary needs (+ nvrtc's builtins, which
+# nvrtc dlopens at run time).
+RUN mkdir -p /cuda-libs \
+    && ldd /gemini_embed_api | grep -oE '/usr/local/cuda[^ ]+' | xargs -I{} cp -L {} /cuda-libs/ \
+    && cp -L /usr/local/cuda/lib64/libnvrtc-builtins.so.* /cuda-libs/ \
+    && ls -la /cuda-libs
+
+FROM ubuntu:22.04 AS base
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates ffmpeg poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /cuda-libs/ /usr/local/cuda/lib64/
+COPY --from=build /gemini_embed_api /usr/local/bin/gemini_embed_api
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
+    NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    GEMINI_EMBED_MODEL_DIR=/models GEMINI_EMBED_MODELS=embeddinggemma-2 GEMINI_EMBED_DEVICE=cuda \
+    GEMINI_EMBED_HOST=0.0.0.0 GEMINI_EMBED_PORT=3000 HF_HOME=/models/.hf-cache
+VOLUME ["/models"]
+EXPOSE 3000
+ENTRYPOINT ["/usr/local/bin/gemini_embed_api"]
+
+# Opt-in: the model baked into the image (`--target bake`).
+FROM base AS bake
+COPY models/ /models/
+
+# Default (last stage): binary only, model from the /models volume.
+FROM base AS runtime

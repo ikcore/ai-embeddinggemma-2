@@ -1,0 +1,31 @@
+[package]
+name = "gemini_embed_api"
+description = "Axum HTTP service for EmbeddingGemma 2 multimodal embeddings (GAISe-compatible /v1/embeddings and /v1/embeddings/contents, Gemini-API-style embedContent)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "gemini_embed_api"
+path = "src/main.rs"
+
+[dependencies]
+gemini_embed_core = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+default = ["hf-hub"]
+hf-hub = ["gemini_embed_core/hf-hub"]
+cuda = ["gemini_embed_core/cuda"]
+cudnn = ["gemini_embed_core/cudnn"]
+metal = ["gemini_embed_core/metal"]
+accelerate = ["gemini_embed_core/accelerate"]
+mkl = ["gemini_embed_core/mkl"]
+mlx = ["gemini_embed_core/mlx"]

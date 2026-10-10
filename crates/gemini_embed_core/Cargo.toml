@@ -1,0 +1,38 @@
+[package]
+name = "gemini_embed_core"
+description = "Google EmbeddingGemma 2 (open-weights multimodal embeddings: text, image, audio, video) on candle (CPU, CUDA, Metal) and Apple MLX"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+candle-core = { workspace = true }
+candle-nn = { workspace = true }
+tokenizers = { workspace = true }
+hf-hub = { workspace = true, optional = true }
+image = { workspace = true }
+symphonia = { workspace = true }
+rustfft = { workspace = true }
+base64 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# MLX only builds on macOS (its build script drives Xcode / cmake), so the
+# dependency is target-gated and the `mlx` feature is a no-op elsewhere.
+[target.'cfg(target_os = "macos")'.dependencies]
+mlx-rs = { workspace = true, optional = true, features = ["metal", "accelerate"] }
+
+[features]
+default = ["hf-hub"]
+hf-hub = ["dep:hf-hub"]
+cuda = ["candle-core/cuda", "candle-nn/cuda"]
+cudnn = ["cuda", "candle-core/cudnn", "candle-nn/cudnn"]
+metal = ["candle-core/metal", "candle-nn/metal"]
+accelerate = ["candle-core/accelerate", "candle-nn/accelerate"]
+mkl = ["candle-core/mkl", "candle-nn/mkl"]
+# Apple MLX (Metal 4 / M5 Neural Accelerators). macOS + Apple Silicon only.
+mlx = ["dep:mlx-rs"]

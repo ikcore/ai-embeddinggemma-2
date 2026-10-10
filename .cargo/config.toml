@@ -1,0 +1,22 @@
+# Workspace conveniences. Cargo has no `[workspace.features]`, so the GPU
+# back-ends are declared on each crate and forwarded to candle / mlx-rs; these
+# aliases just spell the common invocations.
+
+[alias]
+rel = "build --release -p gemini_embed_api"
+cuda = "build --release --features cuda -p gemini_embed_api"
+run-cuda = "run --release --features cuda -p gemini_embed_api --"
+metal = "build --release --features metal -p gemini_embed_api"
+run-metal = "run --release --features metal -p gemini_embed_api --"
+# Apple MLX (macOS on Apple Silicon; needs Xcode + cmake). `metal` keeps
+# candle's Metal backend as a fallback in the same binary.
+mlx = "build --release --features mlx,metal -p gemini_embed_api"
+run-mlx = "run --release --features mlx,metal -p gemini_embed_api --"
+
+# Build-time environment for CUDA builds on Windows — set these in your own
+# ~/.cargo/config.toml so the repository stays machine-independent:
+#
+# [env]
+# NVCC_CCBIN = 'C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\cl.exe'
+# NVCC_APPEND_FLAGS = "-Xcompiler /Zc:preprocessor"   # CUDA 13's CCCL headers
+# CUDA_COMPUTE_CAP = "89"                             # RTX 40xx; 86 = 30xx, 80 = A100, 90 = H100

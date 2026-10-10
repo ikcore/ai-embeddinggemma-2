@@ -1,0 +1,39 @@
+# Build output
+/target
+**/*.rs.bk
+*.pdb
+
+# Model weights live here (gemini_embed_api download ...); keep the folder, not the files
+/models/*
+!/models/.gitkeep
+
+# Local assistant / agent tooling
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.codex/
+AGENTS.md
+.cursor/
+.cursorrules
+.aider*
+.continue/
+.windsurf/
+.github/copilot-instructions.md
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local.toml
+
+# Scratch output (reference vectors, test media)
+/reference/
+*.log

@@ -1,0 +1,37 @@
+# syntax=docker/dockerfile:1
+# CPU image: the server plus ffmpeg (video containers) and pdftoppm (PDF pages)
+# on Debian slim.
+#
+#   docker build -f docker/Dockerfile.cpu -t gemini-embed-api:cpu .
+#   docker run --rm -p 3000:3000 -v gemini-embed-models:/models gemini-embed-api:cpu
+#
+# Fill the volume once:   docker run --rm -v gemini-embed-models:/models gemini-embed-api:cpu download embeddinggemma-2
+# Bake the model in:      docker build -f docker/Dockerfile.cpu --target bake -t gemini-embed-api:cpu-model .
+#                         (needs ./models/embeddinggemma-2 — `gemini_embed_api download embeddinggemma-2`)
+
+FROM rust:1-bookworm AS build
+WORKDIR /src
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/src/target \
+    cargo build --release -p gemini_embed_api \
+    && cp target/release/gemini_embed_api /gemini_embed_api
+
+FROM debian:bookworm-slim AS base
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates ffmpeg poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /gemini_embed_api /usr/local/bin/gemini_embed_api
+ENV GEMINI_EMBED_MODEL_DIR=/models GEMINI_EMBED_MODELS=embeddinggemma-2 GEMINI_EMBED_DEVICE=cpu \
+    GEMINI_EMBED_HOST=0.0.0.0 GEMINI_EMBED_PORT=3000 HF_HOME=/models/.hf-cache
+VOLUME ["/models"]
+EXPOSE 3000
+ENTRYPOINT ["/usr/local/bin/gemini_embed_api"]
+
+# Opt-in: the model baked into the image (`--target bake`).
+FROM base AS bake
+COPY models/ /models/
+
+# Default (last stage): binary only, model from the /models volume.
+FROM base AS runtime

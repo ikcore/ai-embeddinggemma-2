@@ -1,0 +1,112 @@
+### gemini_embed_api — requests for the VS Code REST Client / JetBrains HTTP Client.
+@base = http://localhost:3000
+
+### Text: queries (the server adds "task: search result | query: ")
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "model": "gemini_embed::embeddinggemma-2",
+  "task": "query",
+  "input": ["how much protein should a female eat", "summit define"]
+}
+
+### Text: documents (default task; "title: none | text: "), with a title
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "input": "As a general guideline, the CDC's average requirement of protein for women ages 19 to 70 is 46 grams per day.",
+  "title": "Protein requirements"
+}
+
+### Matryoshka: 256-d (snapped to 128 / 256 / 512 / 768), re-normalized
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "task": "similarity",
+  "input": ["A man is playing a guitar.", "Someone plays an instrument."],
+  "dimensions": 256
+}
+
+### Literal prefix instead of a task ("" = none)
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{
+  "prompt": "task: code retrieval | query: ",
+  "input": "parse a date string in rust"
+}
+
+### Contents: an image (base64 or data: URL; GAISe's byte arrays work too)
+POST {{base}}/v1/embeddings/contents
+Content-Type: application/json
+
+{
+  "input": [
+    { "type": "image", "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAaElEQVR4nM3OMQEAIAzAsFIh3PjXgxj+GaBRkHX3oURiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJMbfgekBARwBggoDZ0MAAAAASUVORK5CYII=" }
+  ]
+}
+
+### Contents: text and image together in ONE vector (a `parts` item)
+POST {{base}}/v1/embeddings/contents
+Content-Type: application/json
+
+{
+  "input": [
+    {
+      "type": "parts",
+      "parts": [
+        { "type": "text", "text": "a product photo of " },
+        { "type": "image", "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAaElEQVR4nM3OMQEAIAzAsFIh3PjXgxj+GaBRkHX3oURiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJMbfgekBARwBggoDZ0MAAAAASUVORK5CYII=" }
+      ]
+    }
+  ]
+}
+
+### Contents: a video as frames (no ffmpeg needed), and a file routed by name
+# (.mp4 / .mov need ffmpeg on the server, .pdf needs pdftoppm; the Docker images ship both)
+POST {{base}}/v1/embeddings/contents
+Content-Type: application/json
+
+{
+  "input": [
+    { "type": "video", "frames": [
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAaElEQVR4nM3OMQEAIAzAsFIh3PjXgxj+GaBRkHX3oURiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJMbfgekBARwBggoDZ0MAAAAASUVORK5CYII=",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAaElEQVR4nM3OMQEAIAzAsFIh3PjXgxj+GaBRkHX3oURiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJMbfgekBARwBggoDZ0MAAAAASUVORK5CYII="
+    ] },
+    { "type": "file", "name": "notes.txt", "data": "aGVsbG8gZnJvbSBhIHRleHQgZmlsZQ==" }
+  ],
+  "task": "document"
+}
+
+### Gemini API style: embedContent (text is verbatim — include the prefix yourself)
+POST {{base}}/v1beta/models/embeddinggemma-2:embedContent
+Content-Type: application/json
+
+{
+  "model": "models/embeddinggemma-2",
+  "content": { "parts": [ { "text": "task: search result | query: how much protein should a female eat" } ] },
+  "outputDimensionality": 768
+}
+
+### Gemini API style: batchEmbedContents with an image and a taskType
+POST {{base}}/v1beta/models/embeddinggemma-2:batchEmbedContents
+Content-Type: application/json
+
+{
+  "requests": [
+    { "model": "models/embeddinggemma-2",
+      "content": { "parts": [ { "inlineData": { "mimeType": "image/png", "data": "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAaElEQVR4nM3OMQEAIAzAsFIh3PjXgxj+GaBRkHX3oURiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJEZiJMbfgekBARwBggoDZ0MAAAAASUVORK5CYII=" } } ] } },
+    { "model": "models/embeddinggemma-2",
+      "content": { "parts": [ { "text": "a red square" } ] },
+      "taskType": "RETRIEVAL_QUERY" }
+  ]
+}
+
+### Errors: unknown model → 404
+POST {{base}}/v1/embeddings
+Content-Type: application/json
+
+{ "model": "nope", "input": "x" }

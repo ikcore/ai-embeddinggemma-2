@@ -1,0 +1,13 @@
+@base = http://localhost:3000
+
+### All loaded models (GAISe GaiseListModelsResponse shape)
+GET {{base}}/v1/models
+
+### Filters like GAISe
+GET {{base}}/v1/models?operation=embeddings&provider=gemini_embed
+
+### One model, by any spelling
+GET {{base}}/v1/models/gemini_embed::embeddinggemma-2
+
+### Health
+GET {{base}}/health

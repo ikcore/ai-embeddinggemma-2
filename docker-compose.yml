@@ -1,0 +1,72 @@
+# gemini-embeddings-2 — Docker Compose
+#
+#   docker compose run --rm download                # fill the weights volume once (1.5 GB)
+#   docker compose up -d                            # CUDA (bf16), http://localhost:3000
+#   docker compose --profile cpu up -d gemini-embed-cpu   # CPU image instead
+#
+# GPU services need the NVIDIA Container Toolkit (Docker Desktop on Windows
+# ships it); the `deploy.resources.reservations.devices` block attaches the GPU.
+#
+# Overrides via environment / .env: CUDA_COMPUTE_CAP (89 = RTX 40xx, 86 = RTX 30xx,
+# 80 = A100, 90 = H100), GEMINI_EMBED_PORT (host port, 3000) and the
+# GEMINI_EMBED_* server variables listed in the README.
+
+services:
+  gemini-embed:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cuda
+      args:
+        CUDA_COMPUTE_CAP: ${CUDA_COMPUTE_CAP:-89}
+    image: gemini-embed-api:cuda
+    ports:
+      - "${GEMINI_EMBED_PORT:-3000}:3000"
+    environment:
+      GEMINI_EMBED_MODELS: ${GEMINI_EMBED_MODELS:-embeddinggemma-2}
+      GEMINI_EMBED_MODALITIES: ${GEMINI_EMBED_MODALITIES:-all}
+      GEMINI_EMBED_LOG_REQUESTS: ${GEMINI_EMBED_LOG_REQUESTS:-true}
+    volumes:
+      - gemini-embed-models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  gemini-embed-cpu:
+    profiles: [cpu]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cpu
+    image: gemini-embed-api:cpu
+    ports:
+      - "${GEMINI_EMBED_PORT:-3000}:3000"
+    environment:
+      GEMINI_EMBED_MODELS: ${GEMINI_EMBED_MODELS:-embeddinggemma-2}
+      GEMINI_EMBED_MODALITIES: ${GEMINI_EMBED_MODALITIES:-all}
+      GEMINI_EMBED_LOG_REQUESTS: ${GEMINI_EMBED_LOG_REQUESTS:-true}
+    volumes:
+      - gemini-embed-models:/models
+    restart: unless-stopped
+
+  # One-shot: fetch the weights into the shared volume.
+  download:
+    profiles: [download]
+    image: gemini-embed-api:cpu
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cpu
+    entrypoint: ["/usr/local/bin/gemini_embed_api", "download"]
+    command: ["embeddinggemma-2"]
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - gemini-embed-models:/models
+
+# A named volume rather than a bind mount of ./models: on Docker Desktop for
+# Windows a bind mount goes through a slow 9p bridge.
+volumes:
+  gemini-embed-models:
