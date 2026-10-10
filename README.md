@@ -18,6 +18,7 @@ Sister project: [ai-harrier-embedding](https://github.com/ikcore/ai-harrier-embe
 
 ## Contents
 
+- **[Best practices](BEST_PRACTICES.md)** — how to write queries and documents, embed media, pick a vector size, and store the vectors
 - [The model](#the-model) · [Quick start](#quick-start) · [Dimensions and precision](#dimensions-and-precision) · [Configuration](#configuration)
 - [The contract](#the-contract) · [Library use](#library-use) · [How it works](#how-it-works) · [Backends](#backends) · [Docker](#docker) · [Limitations](#what-it-does-not-do-yet)
 
