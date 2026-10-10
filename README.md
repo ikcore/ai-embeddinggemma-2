@@ -1,4 +1,4 @@
-# ai-gemini-embeddings-2
+# ai-embeddinggemma-2
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Rust 1.88+](https://img.shields.io/badge/rust-1.88%2B-orange.svg)
@@ -36,31 +36,31 @@ Sister project: [ai-harrier-embedding](https://github.com/ikcore/ai-harrier-embe
 
 Two crates:
 
-- **`crates/gemini_embed_core`** — the model (Gemma 4 text encoder, vision tower, audio Conformer) written once against a small `Backend` trait with candle and MLX implementations; image / audio / video / PDF preprocessing; tokenization, batching, mean pooling, Matryoshka; the task vocabulary and prompts; model loading (local directory first, Hub second).
-- **`crates/gemini_embed_api`** — the HTTP server (`POST /v1/embeddings`, `POST /v1/embeddings/contents`, `POST /v1beta/models/{model}:embedContent` / `:batchEmbedContents`, `GET /v1/models`, `GET /health`) and the `download` command.
+- **`crates/embeddinggemma_core`** — the model (Gemma 4 text encoder, vision tower, audio Conformer) written once against a small `Backend` trait with candle and MLX implementations; image / audio / video / PDF preprocessing; tokenization, batching, mean pooling, Matryoshka; the task vocabulary and prompts; model loading (local directory first, Hub second).
+- **`crates/embeddinggemma_api`** — the HTTP server (`POST /v1/embeddings`, `POST /v1/embeddings/contents`, `POST /v1beta/models/{model}:embedContent` / `:batchEmbedContents`, `GET /v1/models`, `GET /health`) and the `download` command.
 
 ## Quick start
 
 Rust 1.88+. For NVIDIA the CUDA toolkit (`nvcc`); for MLX macOS on Apple Silicon with Xcode and cmake.
 
 ```bash
-git clone https://github.com/ikcore/ai-gemini-embeddings-2.git
-cd ai-gemini-embeddings-2
+git clone https://github.com/ikcore/ai-embeddinggemma-2.git
+cd ai-embeddinggemma-2
 ```
 
 ### 1. Build
 
 ```bash
-cargo build --release -p gemini_embed_api                       # CPU
-cargo build --release --features cuda  -p gemini_embed_api      # NVIDIA                (alias: cargo cuda)
-cargo build --release --features metal -p gemini_embed_api      # Apple, candle Metal   (alias: cargo metal)
-cargo build --release --features mlx,metal -p gemini_embed_api  # Apple, MLX + fallback (alias: cargo mlx)
+cargo build --release -p embeddinggemma_api                       # CPU
+cargo build --release --features cuda  -p embeddinggemma_api      # NVIDIA                (alias: cargo cuda)
+cargo build --release --features metal -p embeddinggemma_api      # Apple, candle Metal   (alias: cargo metal)
+cargo build --release --features mlx,metal -p embeddinggemma_api  # Apple, MLX + fallback (alias: cargo mlx)
 ```
 
 ### 2. Get the weights (once)
 
 ```bash
-target/release/gemini_embed_api download embeddinggemma-2      # → ./models/embeddinggemma-2/ (1.5 GB, plain files)
+target/release/embeddinggemma_api download embeddinggemma-2      # → ./models/embeddinggemma-2/ (1.5 GB, plain files)
 ```
 
 Skipping this also works: a model that is not in `./models` is fetched from the Hugging Face Hub on first start (`HF_HOME` / `HF_TOKEN` honoured).
@@ -87,15 +87,15 @@ Community GGUF conversions ([ggml-org/embeddinggemma-2-GGUF](https://huggingface
 ### 3. Serve
 
 ```bash
-target/release/gemini_embed_api                                             # auto: CUDA → MLX → Metal → CPU
-GEMINI_EMBED_DEVICE=mlx target/release/gemini_embed_api                     # force MLX
-GEMINI_EMBED_MODELS=270m target/release/gemini_embed_api                    # text tower only (270M)
-GEMINI_EMBED_MODALITIES=text,image target/release/gemini_embed_api          # text + vision (440M)
+target/release/embeddinggemma_api                                             # auto: CUDA → MLX → Metal → CPU
+EMBEDDINGGEMMA_DEVICE=mlx target/release/embeddinggemma_api                     # force MLX
+EMBEDDINGGEMMA_MODELS=270m target/release/embeddinggemma_api                    # text tower only (270M)
+EMBEDDINGGEMMA_MODALITIES=text,image target/release/embeddinggemma_api          # text + vision (440M)
 ```
 
 ```text
-gemini_embed_api 0.1.0 · backends: cpu, cuda · device: auto · models: embeddinggemma-2 · model dir: models
-loaded gemini_embed::embeddinggemma-2 (740M params, inputs: text image video pdf audio, 768-d, max 8192 tokens, candle / cuda / bf16) in 1.3s
+embeddinggemma_api 0.1.0 · backends: cpu, cuda · device: auto · models: embeddinggemma-2 · model dir: models
+loaded embeddinggemma::embeddinggemma-2 (740M params, inputs: text image video pdf audio, 768-d, max 8192 tokens, candle / cuda / bf16) in 1.3s
 warmed up in 325 ms
 listening on http://0.0.0.0:3000
 ```
@@ -131,7 +131,7 @@ curl -s localhost:3000/v1/embeddings/contents -H 'content-type: application/json
 Ready-made requests for every endpoint are in [`examples/http/`](examples/http/) (VS Code REST Client / JetBrains HTTP Client). A CLI prints pairwise cosines across modalities:
 
 ```bash
-cargo run --release -p gemini_embed_core --example embed -- --task query "a red circle" --image test.png --audio test.wav
+cargo run --release -p embeddinggemma_core --example embed -- --task query "a red circle" --image test.png --audio test.wav
 ```
 
 ```text
@@ -153,13 +153,13 @@ test.wav                                0.614  0.653  0.518  0.674  1.000
 | CUDA, Metal, MLX | **bf16** | cosine ≥ 0.9996 vs the f32 reference |
 | CPU | **f32** | identical to the reference |
 
-RMSNorms, attention softmax, the audio attention and the vision pooling always compute in f32 internally. Override with `GEMINI_EMBED_DTYPE=f32|bf16|f16` (f32 on CUDA is exact; f16 is accepted but not recommended).
+RMSNorms, attention softmax, the audio attention and the vision pooling always compute in f32 internally. Override with `EMBEDDINGGEMMA_DTYPE=f32|bf16|f16` (f32 on CUDA is exact; f16 is accepted but not recommended).
 
 ## Where the models live
 
 ```
-gemini-embeddings-2/
-└── models/                          ← GEMINI_EMBED_MODEL_DIR (default ./models), git-ignored
+ai-embeddinggemma-2/
+└── models/                          ← EMBEDDINGGEMMA_MODEL_DIR (default ./models), git-ignored
     └── embeddinggemma-2/
         ├── config.json  tokenizer.json  processor_config.json  config_sentence_transformers.json …
         └── model.safetensors
@@ -169,26 +169,26 @@ gemini-embeddings-2/
 
 ## Configuration
 
-`gemini_embed_api --help` prints the same table.
+`embeddinggemma_api --help` prints the same table.
 
 | Variable | Meaning | Default |
 |---|---|---|
-| `GEMINI_EMBED_MODELS` | Comma-separated models; the first is the default. `embeddinggemma-2`, a size variant (`270m` text · `440m` + image · `570m` + audio · `740m` all), a Hub repo (`owner/name[@rev]`) or a directory | `embeddinggemma-2` |
-| `GEMINI_EMBED_MODEL_DIR` | Directory of exported models, checked before the Hub | `./models` |
-| `GEMINI_EMBED_DEVICE` | `auto` · `cpu` · `cuda[:n]` · `metal[:n]` · `mlx` · `gpu` (any accelerator, never CPU) | `auto` (CUDA → MLX → Metal → CPU) |
-| `GEMINI_EMBED_DTYPE` | `f32` · `bf16` · `f16` (the model card warns f16 overflows) | `bf16` on GPU / MLX, `f32` on CPU |
-| `GEMINI_EMBED_MODALITIES` | Towers to load: `all`, `text`, `text,image`, `text,audio` (video and PDF need `image`) | what the name implies, else `all` |
-| `GEMINI_EMBED_MAX_INPUT_TOKENS` | Context per input (text is truncated; media that do not fit are rejected) | `8192` |
-| `GEMINI_EMBED_MAX_BATCH_SIZE` / `_MAX_BATCH_TOKENS` | Rows / padded tokens per text forward pass | `32` / `16384` |
-| `GEMINI_EMBED_IMAGE_TOKENS` | Soft tokens per image: `70` `140` `280` `560` `1120` | `280` |
-| `GEMINI_EMBED_VIDEO_TOKENS` / `_VIDEO_FPS` / `_VIDEO_MAX_FRAMES` | Per-frame tokens, sampling rate, frame cap (evenly thinned beyond) | `140` / `1` / `32` |
-| `GEMINI_EMBED_MAX_AUDIO_SECONDS` | Longest clip; longer audio is truncated | `30` |
-| `GEMINI_EMBED_PDF_MAX_PAGES` / `_PDF_DPI` | Pages rendered per PDF, render resolution | `6` / `144` |
-| `GEMINI_EMBED_FFMPEG` / `_PDFTOPPM` | External tools for video containers and PDFs | `ffmpeg` / `pdftoppm` on `PATH` |
-| `GEMINI_EMBED_MAX_BODY_MB` | Largest request body (media arrive inline) | `64` |
-| `GEMINI_EMBED_WARMUP` | One forward pass per loaded tower at startup | `true` |
-| `GEMINI_EMBED_LOG_REQUESTS` | One stderr line per request | `true` |
-| `GEMINI_EMBED_HOST`, `GEMINI_EMBED_PORT` / `PORT` | Bind address | `0.0.0.0`, `3000` |
+| `EMBEDDINGGEMMA_MODELS` | Comma-separated models; the first is the default. `embeddinggemma-2`, a size variant (`270m` text · `440m` + image · `570m` + audio · `740m` all), a Hub repo (`owner/name[@rev]`) or a directory | `embeddinggemma-2` |
+| `EMBEDDINGGEMMA_MODEL_DIR` | Directory of exported models, checked before the Hub | `./models` |
+| `EMBEDDINGGEMMA_DEVICE` | `auto` · `cpu` · `cuda[:n]` · `metal[:n]` · `mlx` · `gpu` (any accelerator, never CPU) | `auto` (CUDA → MLX → Metal → CPU) |
+| `EMBEDDINGGEMMA_DTYPE` | `f32` · `bf16` · `f16` (the model card warns f16 overflows) | `bf16` on GPU / MLX, `f32` on CPU |
+| `EMBEDDINGGEMMA_MODALITIES` | Towers to load: `all`, `text`, `text,image`, `text,audio` (video and PDF need `image`) | what the name implies, else `all` |
+| `EMBEDDINGGEMMA_MAX_INPUT_TOKENS` | Context per input (text is truncated; media that do not fit are rejected) | `8192` |
+| `EMBEDDINGGEMMA_MAX_BATCH_SIZE` / `_MAX_BATCH_TOKENS` | Rows / padded tokens per text forward pass | `32` / `16384` |
+| `EMBEDDINGGEMMA_IMAGE_TOKENS` | Soft tokens per image: `70` `140` `280` `560` `1120` | `280` |
+| `EMBEDDINGGEMMA_VIDEO_TOKENS` / `_VIDEO_FPS` / `_VIDEO_MAX_FRAMES` | Per-frame tokens, sampling rate, frame cap (evenly thinned beyond) | `140` / `1` / `32` |
+| `EMBEDDINGGEMMA_MAX_AUDIO_SECONDS` | Longest clip; longer audio is truncated | `30` |
+| `EMBEDDINGGEMMA_PDF_MAX_PAGES` / `_PDF_DPI` | Pages rendered per PDF, render resolution | `6` / `144` |
+| `EMBEDDINGGEMMA_FFMPEG` / `_PDFTOPPM` | External tools for video containers and PDFs | `ffmpeg` / `pdftoppm` on `PATH` |
+| `EMBEDDINGGEMMA_MAX_BODY_MB` | Largest request body (media arrive inline) | `64` |
+| `EMBEDDINGGEMMA_WARMUP` | One forward pass per loaded tower at startup | `true` |
+| `EMBEDDINGGEMMA_LOG_REQUESTS` | One stderr line per request | `true` |
+| `EMBEDDINGGEMMA_HOST`, `EMBEDDINGGEMMA_PORT` / `PORT` | Bind address | `0.0.0.0`, `3000` |
 
 ## The contract
 
@@ -198,7 +198,7 @@ GAISe's `GaiseEmbeddingsRequest` / `GaiseEmbeddingsResponse`:
 
 | Field | Meaning |
 |---|---|
-| `model` | `gemini_embed::embeddinggemma-2`, the bare id, the Hub repo, an alias (`eg2`) or a size variant. Empty → the default. Any `provider::` prefix is stripped, so a GAISe router can forward requests unchanged. |
+| `model` | `embeddinggemma::embeddinggemma-2`, the bare id, the Hub repo, an alias (`eg2`) or a size variant. Empty → the default. Any `provider::` prefix is stripped, so a GAISe router can forward requests unchanged. |
 | `input` | one string or an array; vectors come back in input order |
 | `task` | what the vectors are for (below). Default `document`. |
 | `dimensions` | Matryoshka size, snapped to 128 / 256 / 512 / 768 (nearest, ties up — GAISe's rule) |
@@ -256,7 +256,7 @@ Errors are plain-text bodies like gaise-api: `400` for bad input or undecodable 
 ## Library use
 
 ```rust
-use gemini_embed_core::{Content, ContentEmbeddingsRequest, Embedder, EmbedderOptions, EmbeddingTask, EmbeddingsRequest};
+use embeddinggemma_core::{Content, ContentEmbeddingsRequest, Embedder, EmbedderOptions, EmbeddingTask, EmbeddingsRequest};
 
 let embedder = Embedder::load("embeddinggemma-2", EmbedderOptions::default())?;
 let query = embedder.embed_request(&EmbeddingsRequest {
@@ -270,7 +270,7 @@ let photo = embedder.embed_contents(&ContentEmbeddingsRequest {
 })?;
 
 // or decoded inputs, no prompts: Part::Text / Image(RgbImage) / Audio(16 kHz samples) / Video(frames)
-use gemini_embed_core::Part;
+use embeddinggemma_core::Part;
 let v = embedder.embed_inputs(&[vec![Part::Text("a photo of ".into()), Part::Image(image::open("bike.jpg")?.to_rgb8())]], Some(256), true)?;
 ```
 
@@ -278,7 +278,7 @@ let v = embedder.embed_inputs(&[vec![Part::Text("a photo of ".into()), Part::Ima
 
 ## How it works
 
-- **One model, two tensor backends.** The three towers in `gemini_embed_core::model` are written against `backend::Backend` — about 35 operations: tensor algebra plus fused `rms_norm`, `rope`, `attention`, `conv2d`, `gather_last`. `CandleBackend` implements it for CPU / CUDA / Metal (exact query-chunked attention that keeps memory flat for long inputs, with a device-side bidirectional sliding-window mask); `MlxBackend` maps the same calls onto `mlx_rs::fast::{rms_norm, layer_norm, scaled_dot_product_attention}`, `ops::conv2d` (NHWC) and friends. Adding a backend means implementing the trait, not the model.
+- **One model, two tensor backends.** The three towers in `embeddinggemma_core::model` are written against `backend::Backend` — about 35 operations: tensor algebra plus fused `rms_norm`, `rope`, `attention`, `conv2d`, `gather_last`. `CandleBackend` implements it for CPU / CUDA / Metal (exact query-chunked attention that keeps memory flat for long inputs, with a device-side bidirectional sliding-window mask); `MlxBackend` maps the same calls onto `mlx_rs::fast::{rms_norm, layer_norm, scaled_dot_product_attention}`, `ops::conv2d` (NHWC) and friends. Adding a backend means implementing the trait, not the model.
 - **Text encoder** (Gemma 4, bidirectional): token embeddings × √512 rounded to the weight dtype; *projection-only per-layer embeddings* computed from the merged input embeddings (so media soft tokens feed them too); 24 layers — 5 sliding-window (head_dim 256, 2 KV heads, θ = 10⁴, `|q − k| ≤ 512`) to 1 full (head_dim 512, 1 KV head, θ = 10⁶) — each with q/k RMSNorms, a scale-free v RMSNorm, attention scale 1.0, sandwich norms around attention and the GELU-tanh MLP, a PLE gate and a learned `layer_scalar`; final norm and the 512 → 768 projection per token; mean pooling over every real token (prompt and specials included, like sentence-transformers' `Pooling(mean)`). Gemma 4's RMSNorm is `x · w` in f32, not Gemma 3's `x · (1 + w)`.
 - **Vision tower**: aspect-preserving resize to multiples of 48 px within the soft-token budget (`get_aspect_ratio_preserving_size`), 16×16×3 patches mapped to `2(x − 0.5)`, learned x/y position tables, 16 layers with axial 2-D RoPE (θ = 100; first half of each head rotated by x, second by y), 3×3 average pooling over the patch grid × √768 in f32, then `embed_vision` (scale-free RMSNorm, 768 → 512). Images are encoded unpadded, one at a time — equivalent to the reference's padded batch, whose padding is masked out.
 - **Audio tower**: the `Gemma4AudioFeatureExtractor` front end ported exactly (semicausal padding, periodic Hann, 512-point FFT magnitude, 128 HTK mel bins, `ln(mel + 0.001)`, frame-validity mask), two 3×3 stride-2 convs with LayerNorm + ReLU, 12 Conformer layers with clipped linears, chunked local attention (each token sees itself and the 11 before it; logits `q·k + q·r(t − s)` from a projected sinusoidal relative table, soft-capped at 50) computed in banded dense form, a causal depthwise conv, `output_proj` and `embed_audio`.
@@ -300,8 +300,8 @@ The towers are exact; the only f32 difference is the image resampler (the `image
 
 ```bash
 python -I scripts/reference.py models/embeddinggemma-2 target/reference          # torch, torchvision, transformers ≥ 5.19
-GEMINI_EMBED_REFERENCE_DIR=target/reference cargo test --release -p gemini_embed_core --test reference -- --ignored --nocapture
-GEMINI_EMBED_TEST_DEVICE=cuda GEMINI_EMBED_REFERENCE_DIR=target/reference cargo test --release --features cuda -p gemini_embed_core --test reference -- --ignored --nocapture
+EMBEDDINGGEMMA_REFERENCE_DIR=target/reference cargo test --release -p embeddinggemma_core --test reference -- --ignored --nocapture
+EMBEDDINGGEMMA_TEST_DEVICE=cuda EMBEDDINGGEMMA_REFERENCE_DIR=target/reference cargo test --release --features cuda -p embeddinggemma_core --test reference -- --ignored --nocapture
 ```
 
 ### Throughput
@@ -317,27 +317,27 @@ RTX 4080 (native Windows CUDA build, bf16) and i9-13900K (f32); one request each
 | 1 audio clip, 2.5 s | 85 ms | 0.63 s |
 | 8 audio clips | 329 ms | 3.6 s |
 
-Text and audio are cheap; an image is ~2 300 patches through the 16-layer vision tower plus its resize, and dominates on every backend (a 32-frame video is ~32 such passes at 140 tokens each). Use a GPU (or MLX) for image and video workloads, or lower `GEMINI_EMBED_IMAGE_TOKENS` / `_VIDEO_TOKENS` (70 tokens ≈ 4× fewer patches). Images within a request are encoded one after another; batching them through the vision tower is the next optimisation.
+Text and audio are cheap; an image is ~2 300 patches through the 16-layer vision tower plus its resize, and dominates on every backend (a 32-frame video is ~32 such passes at 140 tokens each). Use a GPU (or MLX) for image and video workloads, or lower `EMBEDDINGGEMMA_IMAGE_TOKENS` / `_VIDEO_TOKENS` (70 tokens ≈ 4× fewer patches). Images within a request are encoded one after another; batching them through the vision tower is the next optimisation.
 
 ## Backends
 
 | Backend | Build | Notes |
 |---|---|---|
-| CPU | `cargo build --release -p gemini_embed_api` | f32; `--features mkl` (Intel) / `accelerate` (macOS) speed up GEMMs. Fine for text and audio; images and especially video are slow on CPU (each image is ~2 400 patches through 16 layers). |
+| CPU | `cargo build --release -p embeddinggemma_api` | f32; `--features mkl` (Intel) / `accelerate` (macOS) speed up GEMMs. Fine for text and audio; images and especially video are slow on CPU (each image is ~2 400 patches through 16 layers). |
 | CUDA | `--features cuda` (`cudnn` also available) | bf16 by default. Needs `nvcc` and a host compiler it accepts; on Windows see [the CUDA notes in ai-harrier-embedding](https://github.com/ikcore/ai-harrier-embedding#cuda-on-windows) (`NVCC_CCBIN`, `NVCC_APPEND_FLAGS`, `CUDA_COMPUTE_CAP` in `~/.cargo/config.toml`). |
 | Metal (candle) | `--features metal` | Any Apple GPU, bf16. Portable fallback on macOS. |
 | **MLX** | `--features mlx` (macOS only; add `metal` to keep the candle fallback in the same binary) | Apple's MLX via `mlx-rs` 0.32: Metal 4 TensorOps / Metal Performance Primitives, i.e. the GPU Neural Accelerators on M5-class chips (macOS 26.2+), plain Metal on earlier Apple Silicon. Arrays live in unified memory; graphs are lazy and evaluated when vectors are read. The dependency is target-gated, so `--features mlx` is a no-op on Linux / Windows. Building needs Xcode (with the Metal toolchain) and cmake. |
 
-`GEMINI_EMBED_DEVICE=auto` prefers CUDA, then MLX, then candle Metal, then CPU. Feature flags are pass-throughs to candle (`cuda`, `cudnn`, `metal`, `accelerate`, `mkl`) and mlx-rs (`mlx`); `hf-hub` (default) enables Hub downloads.
+`EMBEDDINGGEMMA_DEVICE=auto` prefers CUDA, then MLX, then candle Metal, then CPU. Feature flags are pass-throughs to candle (`cuda`, `cudnn`, `metal`, `accelerate`, `mkl`) and mlx-rs (`mlx`); `hf-hub` (default) enables Hub downloads.
 
-**Status of MLX:** the MLX backend is written against `mlx-rs` 0.32.0's source (signatures checked) but has **not been compiled or run here** (no Mac was available while building this). Build it on a Mac and run the reference test with `GEMINI_EMBED_TEST_DEVICE=mlx` before relying on it; the candle Metal backend is the tested path on Apple hardware's API surface (it shares all model code with the validated CPU / CUDA runs).
+**Status of MLX:** the MLX backend is written against `mlx-rs` 0.32.0's source (signatures checked) but has **not been compiled or run here** (no Mac was available while building this). Build it on a Mac and run the reference test with `EMBEDDINGGEMMA_TEST_DEVICE=mlx` before relying on it; the candle Metal backend is the tested path on Apple hardware's API surface (it shares all model code with the validated CPU / CUDA runs).
 
 ## Docker
 
 ```bash
 docker compose run --rm download                  # fill the weights volume once (1.5 GB)
 docker compose up -d                              # CUDA, http://localhost:3000
-docker compose --profile cpu up -d gemini-embed-cpu
+docker compose --profile cpu up -d embeddinggemma-cpu
 ```
 
 | Image | Base | Contents |
@@ -345,7 +345,7 @@ docker compose --profile cpu up -d gemini-embed-cpu
 | `docker/Dockerfile.cpu` | `debian:bookworm-slim` | the server + `ffmpeg` + `poppler-utils` (566 MB) |
 | `docker/Dockerfile.cuda` | `ubuntu:22.04` | glibc binary + only the CUDA libraries candle links (`libcublas`, `libcublasLt`, `libcurand`, `libnvrtc`; `libcuda` comes from the host driver) + `ffmpeg` + `poppler-utils` (1.22 GB) |
 
-Both read models from `/models` (`GEMINI_EMBED_MODEL_DIR`); `--target bake` copies `./models` into the image instead. The CUDA image needs the NVIDIA Container Toolkit and the GPU attached at start (`--gpus all` / `gpus: all`). On Docker Desktop for Windows prefer a named volume over a bind mount of `./models` — the 9p bridge makes the first load take ~30 s instead of ~1 s. MLX cannot run in a container (Docker on macOS has no GPU access): build natively on the Mac.
+Both read models from `/models` (`EMBEDDINGGEMMA_MODEL_DIR`); `--target bake` copies `./models` into the image instead. The CUDA image needs the NVIDIA Container Toolkit and the GPU attached at start (`--gpus all` / `gpus: all`). On Docker Desktop for Windows prefer a named volume over a bind mount of `./models` — the 9p bridge makes the first load take ~30 s instead of ~1 s. MLX cannot run in a container (Docker on macOS has no GPU access): build natively on the Mac.
 
 ## What it does not do (yet)
 

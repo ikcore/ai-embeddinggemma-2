@@ -785,6 +785,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
+name = "embeddinggemma_api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "embeddinggemma_core",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "embeddinggemma_core"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "candle-core",
+ "candle-nn",
+ "hf-hub",
+ "image",
+ "mlx-rs",
+ "rustfft",
+ "serde",
+ "serde_json",
+ "symphonia",
+ "tokenizers 0.23.2",
+]
+
+[[package]]
 name = "encode_unicode"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -984,34 +1012,6 @@ dependencies = [
  "futures-task",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "gemini_embed_api"
-version = "0.1.0"
-dependencies = [
- "axum",
- "gemini_embed_core",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "gemini_embed_core"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "candle-core",
- "candle-nn",
- "hf-hub",
- "image",
- "mlx-rs",
- "rustfft",
- "serde",
- "serde_json",
- "symphonia",
- "tokenizers 0.23.2",
 ]
 
 [[package]]

@@ -15,7 +15,7 @@ use serde::Serialize;
 use std::fmt;
 
 /// The provider key used in `provider::model` ids.
-pub const PROVIDER: &str = "gemini_embed";
+pub const PROVIDER: &str = "embeddinggemma";
 
 /// Which optional towers are loaded (the text encoder always is). Video and
 /// PDF go through the vision tower.
@@ -164,7 +164,7 @@ const VARIANTS: &[(&str, Modalities)] = &[
 ];
 
 /// Strip a `provider::` prefix (any provider — a GAISe router may forward
-/// `gemini_embed::x`, a user may type `x`).
+/// `embeddinggemma::x`, a user may type `x`).
 pub fn bare_id(name: &str) -> &str {
     let name = name.trim();
     match name.split_once("::") {
@@ -212,7 +212,7 @@ mod tests {
     fn resolves_every_spelling() {
         for name in [
             "embeddinggemma-2",
-            "gemini_embed::embeddinggemma-2",
+            "embeddinggemma::embeddinggemma-2",
             "google/embeddinggemma-2",
             "Google/EmbeddingGemma-2",
             "eg2",

@@ -3,15 +3,15 @@
 # aliases just spell the common invocations.
 
 [alias]
-rel = "build --release -p gemini_embed_api"
-cuda = "build --release --features cuda -p gemini_embed_api"
-run-cuda = "run --release --features cuda -p gemini_embed_api --"
-metal = "build --release --features metal -p gemini_embed_api"
-run-metal = "run --release --features metal -p gemini_embed_api --"
+rel = "build --release -p embeddinggemma_api"
+cuda = "build --release --features cuda -p embeddinggemma_api"
+run-cuda = "run --release --features cuda -p embeddinggemma_api --"
+metal = "build --release --features metal -p embeddinggemma_api"
+run-metal = "run --release --features metal -p embeddinggemma_api --"
 # Apple MLX (macOS on Apple Silicon; needs Xcode + cmake). `metal` keeps
 # candle's Metal backend as a fallback in the same binary.
-mlx = "build --release --features mlx,metal -p gemini_embed_api"
-run-mlx = "run --release --features mlx,metal -p gemini_embed_api --"
+mlx = "build --release --features mlx,metal -p embeddinggemma_api"
+run-mlx = "run --release --features mlx,metal -p embeddinggemma_api --"
 
 # Build-time environment for CUDA builds on Windows — set these in your own
 # ~/.cargo/config.toml so the repository stays machine-independent:

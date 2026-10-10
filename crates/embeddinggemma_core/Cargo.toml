@@ -1,5 +1,5 @@
 [package]
-name = "gemini_embed_core"
+name = "embeddinggemma_core"
 description = "Google EmbeddingGemma 2 (open-weights multimodal embeddings: text, image, audio, video) on candle (CPU, CUDA, Metal) and Apple MLX"
 version.workspace = true
 edition.workspace = true

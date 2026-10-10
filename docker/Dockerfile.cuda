@@ -3,8 +3,8 @@
 # cublasLt, curand, nvrtc) on Debian slim, with ffmpeg and pdftoppm. libcuda
 # itself comes from the host driver via the NVIDIA container toolkit.
 #
-#   docker build -f docker/Dockerfile.cuda -t gemini-embed-api:cuda . --build-arg CUDA_COMPUTE_CAP=89
-#   docker run --rm --gpus all -p 3000:3000 -v gemini-embed-models:/models gemini-embed-api:cuda
+#   docker build -f docker/Dockerfile.cuda -t embeddinggemma-api:cuda . --build-arg CUDA_COMPUTE_CAP=89
+#   docker run --rm --gpus all -p 3000:3000 -v embeddinggemma-models:/models embeddinggemma-api:cuda
 #
 # `--gpus all` (or `gpus: all` in compose) is required: without an attached GPU
 # the binary fails at start with "libcuda.so.1: cannot open shared object file".
@@ -26,12 +26,12 @@ COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/src/target \
-    cargo build --release --features cuda -p gemini_embed_api \
-    && cp target/release/gemini_embed_api /gemini_embed_api
+    cargo build --release --features cuda -p embeddinggemma_api \
+    && cp target/release/embeddinggemma_api /embeddinggemma_api
 # Exactly the CUDA shared objects the binary needs (+ nvrtc's builtins, which
 # nvrtc dlopens at run time).
 RUN mkdir -p /cuda-libs \
-    && ldd /gemini_embed_api | grep -oE '/usr/local/cuda[^ ]+' | xargs -I{} cp -L {} /cuda-libs/ \
+    && ldd /embeddinggemma_api | grep -oE '/usr/local/cuda[^ ]+' | xargs -I{} cp -L {} /cuda-libs/ \
     && cp -L /usr/local/cuda/lib64/libnvrtc-builtins.so.* /cuda-libs/ \
     && ls -la /cuda-libs
 
@@ -40,14 +40,14 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates ffmpeg poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /cuda-libs/ /usr/local/cuda/lib64/
-COPY --from=build /gemini_embed_api /usr/local/bin/gemini_embed_api
+COPY --from=build /embeddinggemma_api /usr/local/bin/embeddinggemma_api
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
     NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility \
-    GEMINI_EMBED_MODEL_DIR=/models GEMINI_EMBED_MODELS=embeddinggemma-2 GEMINI_EMBED_DEVICE=cuda \
-    GEMINI_EMBED_HOST=0.0.0.0 GEMINI_EMBED_PORT=3000 HF_HOME=/models/.hf-cache
+    EMBEDDINGGEMMA_MODEL_DIR=/models EMBEDDINGGEMMA_MODELS=embeddinggemma-2 EMBEDDINGGEMMA_DEVICE=cuda \
+    EMBEDDINGGEMMA_HOST=0.0.0.0 EMBEDDINGGEMMA_PORT=3000 HF_HOME=/models/.hf-cache
 VOLUME ["/models"]
 EXPOSE 3000
-ENTRYPOINT ["/usr/local/bin/gemini_embed_api"]
+ENTRYPOINT ["/usr/local/bin/embeddinggemma_api"]
 
 # Opt-in: the model baked into the image (`--target bake`).
 FROM base AS bake

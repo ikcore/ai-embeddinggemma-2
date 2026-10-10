@@ -74,7 +74,7 @@ impl Default for EmbedderOptions {
 pub struct ModelInfo {
     /// Bare id (`embeddinggemma-2`).
     pub id: String,
-    /// `gemini_embed::embeddinggemma-2`.
+    /// `embeddinggemma::embeddinggemma-2`.
     pub qualified_id: String,
     pub display_name: String,
     /// Hub repo or local path the weights came from.
@@ -199,7 +199,7 @@ impl Embedder {
     /// Load by registry name (`embeddinggemma-2`, `270m`, `440m`, `570m`,
     /// `740m`), Hub repo (`google/embeddinggemma-2[@rev]`) or local
     /// directory. A copy under the model directory
-    /// (`$GEMINI_EMBED_MODEL_DIR`, default `./models`) is used before
+    /// (`$EMBEDDINGGEMMA_MODEL_DIR`, default `./models`) is used before
     /// anything is downloaded.
     pub fn load(name: &str, options: EmbedderOptions) -> Result<Self> {
         Self::load_from(name, &model_dir(), options)

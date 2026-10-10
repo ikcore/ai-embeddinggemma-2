@@ -1,4 +1,4 @@
-### gemini_embed_api — requests for the VS Code REST Client / JetBrains HTTP Client.
+### embeddinggemma_api — requests for the VS Code REST Client / JetBrains HTTP Client.
 @base = http://localhost:3000
 
 ### Text: queries (the server adds "task: search result | query: ")
@@ -6,7 +6,7 @@ POST {{base}}/v1/embeddings
 Content-Type: application/json
 
 {
-  "model": "gemini_embed::embeddinggemma-2",
+  "model": "embeddinggemma::embeddinggemma-2",
   "task": "query",
   "input": ["how much protein should a female eat", "summit define"]
 }

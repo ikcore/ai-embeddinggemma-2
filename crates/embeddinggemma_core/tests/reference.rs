@@ -5,33 +5,33 @@
 //!
 //! ```text
 //! python -I scripts/reference.py models/embeddinggemma-2 target/reference
-//! GEMINI_EMBED_REFERENCE_DIR=target/reference cargo test --release -p gemini_embed_core --test reference -- --ignored --nocapture
-//! GEMINI_EMBED_TEST_DEVICE=cuda GEMINI_EMBED_REFERENCE_DIR=… cargo test --release --features cuda -p gemini_embed_core --test reference -- --ignored --nocapture
+//! EMBEDDINGGEMMA_REFERENCE_DIR=target/reference cargo test --release -p embeddinggemma_core --test reference -- --ignored --nocapture
+//! EMBEDDINGGEMMA_TEST_DEVICE=cuda EMBEDDINGGEMMA_REFERENCE_DIR=… cargo test --release --features cuda -p embeddinggemma_core --test reference -- --ignored --nocapture
 //! ```
 //!
 //! The weights come from `./models` (or the Hub). bf16 and accelerators are
 //! held to looser cosine bounds than f32 on the CPU.
 
-use gemini_embed_core::{DeviceRequest, Embedder, EmbedderOptions, Part, Precision};
+use embeddinggemma_core::{DeviceRequest, Embedder, EmbedderOptions, Part, Precision};
 use serde_json::Value;
 use std::path::PathBuf;
 
 fn reference_dir() -> PathBuf {
     PathBuf::from(
-        std::env::var("GEMINI_EMBED_REFERENCE_DIR")
-            .expect("set GEMINI_EMBED_REFERENCE_DIR to the output of scripts/reference.py"),
+        std::env::var("EMBEDDINGGEMMA_REFERENCE_DIR")
+            .expect("set EMBEDDINGGEMMA_REFERENCE_DIR to the output of scripts/reference.py"),
     )
 }
 
 fn load() -> Embedder {
-    let device: DeviceRequest = std::env::var("GEMINI_EMBED_TEST_DEVICE")
+    let device: DeviceRequest = std::env::var("EMBEDDINGGEMMA_TEST_DEVICE")
         .unwrap_or_else(|_| "cpu".into())
         .parse()
         .unwrap();
-    let dtype = std::env::var("GEMINI_EMBED_TEST_DTYPE")
+    let dtype = std::env::var("EMBEDDINGGEMMA_TEST_DTYPE")
         .ok()
-        .map(|d| gemini_embed_core::parse_precision(&d).unwrap());
-    let dir = std::env::var("GEMINI_EMBED_MODEL_DIR").unwrap_or_else(|_| "../../models".into());
+        .map(|d| embeddinggemma_core::parse_precision(&d).unwrap());
+    let dir = std::env::var("EMBEDDINGGEMMA_MODEL_DIR").unwrap_or_else(|_| "../../models".into());
     Embedder::load_from(
         "embeddinggemma-2",
         std::path::Path::new(&dir),
@@ -138,7 +138,7 @@ fn matches_transformers() {
     // Image: placeholder layout exactly, pixels approximately (resampler),
     // vector closely.
     let png = std::fs::read(dir.join("test.png")).unwrap();
-    let image = gemini_embed_core::media::image::decode_image(&png).unwrap();
+    let image = embeddinggemma_core::media::image::decode_image(&png).unwrap();
     let (row, counts) = e.prepare_row(&[Part::Image(image.clone())]).unwrap();
     assert_eq!(row.ids, ids(&r["image_ids"]), "image token layout");
     eprintln!("image soft tokens {}", counts.image);
@@ -149,7 +149,7 @@ fn matches_transformers() {
         .remove(0);
     report("image", &g, &vectors(&r["image"])[0], bound(&e, 0.999));
     // Already at a target size: no resampling, so the tower must be exact.
-    let exact = gemini_embed_core::media::image::decode_image(
+    let exact = embeddinggemma_core::media::image::decode_image(
         &std::fs::read(dir.join("test768.png")).unwrap(),
     )
     .unwrap();
@@ -199,8 +199,8 @@ fn matches_transformers() {
     let (row, counts) = e.prepare_row(&[Part::Audio(samples.clone())]).unwrap();
     assert_eq!(row.ids, ids(&r["audio_ids"]), "audio token layout");
     eprintln!("audio soft tokens {}", counts.audio);
-    let cfg = gemini_embed_core::config::ProcessorConfig::default();
-    let mel = gemini_embed_core::media::audio::log_mel(&samples, &cfg).unwrap();
+    let cfg = embeddinggemma_core::config::ProcessorConfig::default();
+    let mel = embeddinggemma_core::media::audio::log_mel(&samples, &cfg).unwrap();
     assert_eq!(mel.frames, r["audio_frames"].as_u64().unwrap() as usize);
     assert_eq!(
         mel.valid_frames,

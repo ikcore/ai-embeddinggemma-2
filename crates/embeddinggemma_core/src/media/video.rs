@@ -54,7 +54,7 @@ impl ScratchDir {
             .map(|d| d.subsec_nanos())
             .unwrap_or(0);
         let dir =
-            std::env::temp_dir().join(format!("gemini-embed-{}-{n}-{nanos}", std::process::id()));
+            std::env::temp_dir().join(format!("embeddinggemma-{}-{n}-{nanos}", std::process::id()));
         std::fs::create_dir_all(&dir)?;
         Ok(Self(dir))
     }
@@ -145,7 +145,7 @@ pub fn decode_video(
             .args(["-frames:v", "3600"])
             .arg(&pattern),
         "video",
-        "GEMINI_EMBED_FFMPEG",
+        "EMBEDDINGGEMMA_FFMPEG",
     )?;
     let frames = read_images(&dir.0, "png")?;
     if frames.is_empty() {
@@ -167,7 +167,7 @@ pub fn render_pdf(bytes: &[u8], opts: &ToolOptions) -> Result<Vec<RgbImage>> {
             .arg(&input)
             .arg(dir.0.join("page")),
         "PDF",
-        "GEMINI_EMBED_PDFTOPPM",
+        "EMBEDDINGGEMMA_PDFTOPPM",
     )?;
     let pages = read_images(&dir.0, "png")?;
     if pages.is_empty() {
@@ -205,7 +205,7 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(
-            e.contains("definitely-not-ffmpeg-xyz") && e.contains("GEMINI_EMBED_FFMPEG"),
+            e.contains("definitely-not-ffmpeg-xyz") && e.contains("EMBEDDINGGEMMA_FFMPEG"),
             "{e}"
         );
     }

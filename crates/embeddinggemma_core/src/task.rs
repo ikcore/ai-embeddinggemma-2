@@ -273,7 +273,7 @@ impl PromptChoice {
 /// `POST /v1/embeddings` body — wire-compatible with `GaiseEmbeddingsRequest`.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EmbeddingsRequest {
-    /// `gemini_embed::embeddinggemma-2`, `embeddinggemma-2`,
+    /// `embeddinggemma::embeddinggemma-2`, `embeddinggemma-2`,
     /// `google/embeddinggemma-2`, or empty for the service default.
     #[serde(default)]
     pub model: String,

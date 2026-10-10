@@ -1,6 +1,6 @@
 use std::fmt;
 
-/// Everything that can go wrong in `gemini_embed_core`.
+/// Everything that can go wrong in `embeddinggemma_core`.
 #[derive(Debug)]
 pub enum EmbedError {
     /// A tensor / device / weight-loading failure from candle.

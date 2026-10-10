@@ -10,8 +10,8 @@
 //! and `title` are accepted as a convenience and become the matching prefix.
 //! API keys (`?key=`, `x-goog-api-key`) are ignored.
 
-use gemini_embed_core::content::decode_base64;
-use gemini_embed_core::{Content, ContentEmbeddingsRequest, EmbeddingTask, OneOrMany};
+use embeddinggemma_core::content::decode_base64;
+use embeddinggemma_core::{Content, ContentEmbeddingsRequest, EmbeddingTask, OneOrMany};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]

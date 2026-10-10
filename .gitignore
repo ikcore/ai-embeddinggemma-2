@@ -3,7 +3,7 @@
 **/*.rs.bk
 *.pdb
 
-# Model weights live here (gemini_embed_api download ...); keep the folder, not the files
+# Model weights live here (embeddinggemma_api download ...); keep the folder, not the files
 /models/*
 !/models/.gitkeep
 

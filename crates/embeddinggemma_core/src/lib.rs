@@ -1,4 +1,4 @@
-//! # gemini_embed_core
+//! # embeddinggemma_core
 //!
 //! Google's open-weights multimodal embedding model
 //! [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) in
@@ -14,7 +14,7 @@
 //! and task vocabulary are wire-compatible with GAISe's embedding contract.
 //!
 //! ```no_run
-//! use gemini_embed_core::{Content, ContentEmbeddingsRequest, Embedder, EmbedderOptions, EmbeddingTask, EmbeddingsRequest};
+//! use embeddinggemma_core::{Content, ContentEmbeddingsRequest, Embedder, EmbedderOptions, EmbeddingTask, EmbeddingsRequest};
 //!
 //! let embedder = Embedder::load("embeddinggemma-2", EmbedderOptions::default())?;
 //! let query = embedder.embed_request(&EmbeddingsRequest {

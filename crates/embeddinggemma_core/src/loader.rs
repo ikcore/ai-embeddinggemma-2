@@ -4,7 +4,7 @@
 //! The recommended layout for deployment is a flat **model directory** next
 //! to the project (`./models/embeddinggemma-2/config.json`, `tokenizer.json`,
 //! `model.safetensors`, `processor_config.json`, …), created with
-//! [`export_to_dir`] / `gemini_embed_api download`. [`resolve_source`] checks
+//! [`export_to_dir`] / `embeddinggemma_api download`. [`resolve_source`] checks
 //! it before going to the Hub, so a populated directory means no network at
 //! startup — which is what a Docker image or an air-gapped box wants.
 
@@ -14,9 +14,9 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 /// Environment variable naming the model directory; default `./models`.
-pub const MODEL_DIR_ENV: &str = "GEMINI_EMBED_MODEL_DIR";
+pub const MODEL_DIR_ENV: &str = "EMBEDDINGGEMMA_MODEL_DIR";
 
-/// The model directory: `$GEMINI_EMBED_MODEL_DIR`, else `./models`.
+/// The model directory: `$EMBEDDINGGEMMA_MODEL_DIR`, else `./models`.
 pub fn model_dir() -> PathBuf {
     std::env::var_os(MODEL_DIR_ENV)
         .filter(|v| !v.is_empty())
@@ -351,7 +351,7 @@ mod tests {
     #[test]
     fn prefers_the_model_dir() {
         let tmp =
-            std::env::temp_dir().join(format!("gemini-embed-modeldir-{}", std::process::id()));
+            std::env::temp_dir().join(format!("embeddinggemma-modeldir-{}", std::process::id()));
         let local = tmp.join("embeddinggemma-2");
         std::fs::create_dir_all(&local).unwrap();
         assert!(matches!(
@@ -362,7 +362,7 @@ mod tests {
         for name in [
             "embeddinggemma-2",
             "270m",
-            "gemini_embed::eg2",
+            "embeddinggemma::eg2",
             "google/embeddinggemma-2",
         ] {
             assert_eq!(

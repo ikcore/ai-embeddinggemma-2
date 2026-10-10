@@ -20,8 +20,8 @@ use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use gemini_embed_core::registry::{self, Modalities};
-use gemini_embed_core::{
+use embeddinggemma_core::registry::{self, Modalities};
+use embeddinggemma_core::{
     ContentEmbeddingsRequest, DeviceRequest, EmbedError, Embedder, EmbedderOptions, EmbeddingTask,
     EmbeddingsRequest, EmbeddingsResponse, ModelInfo, OneOrMany, PROVIDER, Precision, ToolOptions,
 };
@@ -60,7 +60,7 @@ impl AppState {
     }
 
     /// Find a loaded model by any spelling GAISe, a Gemini client or a user
-    /// might send (`gemini_embed::embeddinggemma-2`, `models/eg2`, `270m`, …).
+    /// might send (`embeddinggemma::embeddinggemma-2`, `models/eg2`, `270m`, …).
     pub fn model(&self, name: &str) -> Option<&Arc<Embedder>> {
         let bare = gemini::strip_models_prefix(registry::bare_id(name));
         if bare.is_empty() {
@@ -404,12 +404,12 @@ pub struct Health {
 async fn handle_health(State(state): State<Arc<AppState>>) -> Json<Health> {
     Json(Health {
         status: "ok",
-        service: "gemini_embed_api",
+        service: "embeddinggemma_api",
         version: env!("CARGO_PKG_VERSION"),
         uptime_seconds: state.started.elapsed().as_secs(),
         default_model: state.default_model.clone(),
         models: state.loaded_ids(),
-        backends: gemini_embed_core::compiled_backends(),
+        backends: embeddinggemma_core::compiled_backends(),
     })
 }
 
@@ -567,34 +567,34 @@ pub struct ServerConfig {
 
 impl ServerConfig {
     pub const ENV_HELP: &'static str = "\
-GEMINI_EMBED_MODELS            comma-separated models to load; first is the default
-                               (embeddinggemma-2, a size variant 270m / 440m / 570m / 740m,
-                               a Hub repo[@rev] or a local directory)   default: embeddinggemma-2
-GEMINI_EMBED_MODEL             single-model alias for GEMINI_EMBED_MODELS
-GEMINI_EMBED_MODEL_DIR         directory of exported models, checked before the Hub (default ./models)
-GEMINI_EMBED_DEVICE            auto | cpu | cuda[:n] | metal[:n] | mlx | gpu     (default auto:
-                               CUDA, then MLX, then candle Metal, then CPU)
-GEMINI_EMBED_DTYPE             f32 | bf16 | f16   (default bf16 on GPU / MLX, f32 on CPU; avoid f16)
-GEMINI_EMBED_MODALITIES        towers to load: all | text,image,audio | text   (default: what the model
-                               name implies, else all; video and PDF need image)
-GEMINI_EMBED_MAX_INPUT_TOKENS  context per input, shared by all modalities (default 8192)
-GEMINI_EMBED_MAX_BATCH_SIZE    rows per forward pass (default 32)
-GEMINI_EMBED_MAX_BATCH_TOKENS  padded tokens per forward pass (default 16384)
-GEMINI_EMBED_IMAGE_TOKENS      soft tokens per image: 70 | 140 | 280 | 560 | 1120 (default 280)
-GEMINI_EMBED_VIDEO_TOKENS      soft tokens per video frame (default 140)
-GEMINI_EMBED_VIDEO_FPS         video sampling rate (default 1)
-GEMINI_EMBED_VIDEO_MAX_FRAMES  frames per video, evenly thinned beyond (default 32)
-GEMINI_EMBED_MAX_AUDIO_SECONDS longest audio clip; longer audio is truncated (default 30)
-GEMINI_EMBED_PDF_MAX_PAGES     pages rendered per PDF (default 6)
-GEMINI_EMBED_PDF_DPI           PDF render resolution (default 144)
-GEMINI_EMBED_FFMPEG            ffmpeg executable for video containers (default ffmpeg on PATH)
-GEMINI_EMBED_PDFTOPPM          pdftoppm executable for PDFs (default pdftoppm on PATH)
-GEMINI_EMBED_MAX_BODY_MB       largest request body (default 64)
-GEMINI_EMBED_WARMUP            run one forward pass per tower at startup (default true)
-GEMINI_EMBED_LOG_REQUESTS      log one line per request (default true)
-GEMINI_EMBED_HOST              bind address (default 0.0.0.0)
-GEMINI_EMBED_PORT / PORT       listen port (default 3000)
-HF_HOME / HF_TOKEN             Hugging Face cache dir / token for downloads";
+EMBEDDINGGEMMA_MODELS             comma-separated models to load; first is the default
+                                  (embeddinggemma-2, a size variant 270m / 440m / 570m / 740m,
+                                  a Hub repo[@rev] or a local directory)   default: embeddinggemma-2
+EMBEDDINGGEMMA_MODEL              single-model alias for EMBEDDINGGEMMA_MODELS
+EMBEDDINGGEMMA_MODEL_DIR          directory of exported models, checked before the Hub (default ./models)
+EMBEDDINGGEMMA_DEVICE             auto | cpu | cuda[:n] | metal[:n] | mlx | gpu     (default auto:
+                                  CUDA, then MLX, then candle Metal, then CPU)
+EMBEDDINGGEMMA_DTYPE              f32 | bf16 | f16   (default bf16 on GPU / MLX, f32 on CPU; avoid f16)
+EMBEDDINGGEMMA_MODALITIES         towers to load: all | text,image,audio | text   (default: what the model
+                                  name implies, else all; video and PDF need image)
+EMBEDDINGGEMMA_MAX_INPUT_TOKENS   context per input, shared by all modalities (default 8192)
+EMBEDDINGGEMMA_MAX_BATCH_SIZE     rows per forward pass (default 32)
+EMBEDDINGGEMMA_MAX_BATCH_TOKENS   padded tokens per forward pass (default 16384)
+EMBEDDINGGEMMA_IMAGE_TOKENS       soft tokens per image: 70 | 140 | 280 | 560 | 1120 (default 280)
+EMBEDDINGGEMMA_VIDEO_TOKENS       soft tokens per video frame (default 140)
+EMBEDDINGGEMMA_VIDEO_FPS          video sampling rate (default 1)
+EMBEDDINGGEMMA_VIDEO_MAX_FRAMES   frames per video, evenly thinned beyond (default 32)
+EMBEDDINGGEMMA_MAX_AUDIO_SECONDS  longest audio clip; longer audio is truncated (default 30)
+EMBEDDINGGEMMA_PDF_MAX_PAGES      pages rendered per PDF (default 6)
+EMBEDDINGGEMMA_PDF_DPI            PDF render resolution (default 144)
+EMBEDDINGGEMMA_FFMPEG             ffmpeg executable for video containers (default ffmpeg on PATH)
+EMBEDDINGGEMMA_PDFTOPPM           pdftoppm executable for PDFs (default pdftoppm on PATH)
+EMBEDDINGGEMMA_MAX_BODY_MB        largest request body (default 64)
+EMBEDDINGGEMMA_WARMUP             run one forward pass per tower at startup (default true)
+EMBEDDINGGEMMA_LOG_REQUESTS       log one line per request (default true)
+EMBEDDINGGEMMA_HOST               bind address (default 0.0.0.0)
+EMBEDDINGGEMMA_PORT / PORT        listen port (default 3000)
+HF_HOME / HF_TOKEN                Hugging Face cache dir / token for downloads";
 
     pub fn from_env() -> Result<Self, String> {
         Self::from_lookup(|k| std::env::var(k).ok())
@@ -603,15 +603,15 @@ HF_HOME / HF_TOKEN             Hugging Face cache dir / token for downloads";
     /// Parse from any key → value lookup (the environment, or a map in tests).
     pub fn from_lookup(lookup: impl Fn(&str) -> Option<String>) -> Result<Self, String> {
         let var = |k: &str| lookup(k).filter(|v| !v.trim().is_empty());
-        let models: Vec<String> = var("GEMINI_EMBED_MODELS")
-            .or_else(|| var("GEMINI_EMBED_MODEL"))
-            .unwrap_or_else(|| gemini_embed_core::DEFAULT_MODEL_ID.to_string())
+        let models: Vec<String> = var("EMBEDDINGGEMMA_MODELS")
+            .or_else(|| var("EMBEDDINGGEMMA_MODEL"))
+            .unwrap_or_else(|| embeddinggemma_core::DEFAULT_MODEL_ID.to_string())
             .split(',')
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect();
         if models.is_empty() {
-            return Err("GEMINI_EMBED_MODELS is empty".into());
+            return Err("EMBEDDINGGEMMA_MODELS is empty".into());
         }
         fn parse<T: std::str::FromStr>(
             k: &str,
@@ -638,58 +638,58 @@ HF_HOME / HF_TOKEN             Hugging Face cache dir / token for downloads";
         let defaults = EmbedderOptions::default();
         let tool_defaults = ToolOptions::default();
         let options = EmbedderOptions {
-            device: var("GEMINI_EMBED_DEVICE")
+            device: var("EMBEDDINGGEMMA_DEVICE")
                 .unwrap_or_default()
                 .parse::<DeviceRequest>()
                 .map_err(|e| e.to_string())?,
-            dtype: var("GEMINI_EMBED_DTYPE")
-                .map(|v| gemini_embed_core::parse_precision(&v))
+            dtype: var("EMBEDDINGGEMMA_DTYPE")
+                .map(|v| embeddinggemma_core::parse_precision(&v))
                 .transpose()
                 .map_err(|e| e.to_string())?,
-            modalities: var("GEMINI_EMBED_MODALITIES")
+            modalities: var("EMBEDDINGGEMMA_MODALITIES")
                 .map(|v| Modalities::parse(&v))
                 .transpose()?,
-            max_input_tokens: usize_var("GEMINI_EMBED_MAX_INPUT_TOKENS")?,
-            max_batch_size: usize_var("GEMINI_EMBED_MAX_BATCH_SIZE")?
+            max_input_tokens: usize_var("EMBEDDINGGEMMA_MAX_INPUT_TOKENS")?,
+            max_batch_size: usize_var("EMBEDDINGGEMMA_MAX_BATCH_SIZE")?
                 .unwrap_or(defaults.max_batch_size),
-            max_batch_tokens: usize_var("GEMINI_EMBED_MAX_BATCH_TOKENS")?
+            max_batch_tokens: usize_var("EMBEDDINGGEMMA_MAX_BATCH_TOKENS")?
                 .unwrap_or(defaults.max_batch_tokens),
-            image_soft_tokens: usize_var("GEMINI_EMBED_IMAGE_TOKENS")?,
-            video_soft_tokens: usize_var("GEMINI_EMBED_VIDEO_TOKENS")?,
-            max_audio_seconds: f64_var("GEMINI_EMBED_MAX_AUDIO_SECONDS")?,
+            image_soft_tokens: usize_var("EMBEDDINGGEMMA_IMAGE_TOKENS")?,
+            video_soft_tokens: usize_var("EMBEDDINGGEMMA_VIDEO_TOKENS")?,
+            max_audio_seconds: f64_var("EMBEDDINGGEMMA_MAX_AUDIO_SECONDS")?,
             tools: ToolOptions {
-                ffmpeg: var("GEMINI_EMBED_FFMPEG").unwrap_or(tool_defaults.ffmpeg),
-                pdftoppm: var("GEMINI_EMBED_PDFTOPPM").unwrap_or(tool_defaults.pdftoppm),
-                video_fps: f64_var("GEMINI_EMBED_VIDEO_FPS")?.unwrap_or(tool_defaults.video_fps),
-                video_max_frames: usize_var("GEMINI_EMBED_VIDEO_MAX_FRAMES")?
+                ffmpeg: var("EMBEDDINGGEMMA_FFMPEG").unwrap_or(tool_defaults.ffmpeg),
+                pdftoppm: var("EMBEDDINGGEMMA_PDFTOPPM").unwrap_or(tool_defaults.pdftoppm),
+                video_fps: f64_var("EMBEDDINGGEMMA_VIDEO_FPS")?.unwrap_or(tool_defaults.video_fps),
+                video_max_frames: usize_var("EMBEDDINGGEMMA_VIDEO_MAX_FRAMES")?
                     .unwrap_or(tool_defaults.video_max_frames),
-                pdf_max_pages: usize_var("GEMINI_EMBED_PDF_MAX_PAGES")?
+                pdf_max_pages: usize_var("EMBEDDINGGEMMA_PDF_MAX_PAGES")?
                     .unwrap_or(tool_defaults.pdf_max_pages),
                 pdf_dpi: parse::<u32>(
-                    "GEMINI_EMBED_PDF_DPI",
-                    var("GEMINI_EMBED_PDF_DPI"),
+                    "EMBEDDINGGEMMA_PDF_DPI",
+                    var("EMBEDDINGGEMMA_PDF_DPI"),
                     "an integer",
                 )?
                 .unwrap_or(tool_defaults.pdf_dpi),
             },
         };
         let port = parse::<u16>(
-            "GEMINI_EMBED_PORT",
-            var("GEMINI_EMBED_PORT").or_else(|| var("PORT")),
+            "EMBEDDINGGEMMA_PORT",
+            var("EMBEDDINGGEMMA_PORT").or_else(|| var("PORT")),
             "a port number",
         )?
         .unwrap_or(3000);
-        let max_body_mb = usize_var("GEMINI_EMBED_MAX_BODY_MB")?.unwrap_or(64);
+        let max_body_mb = usize_var("EMBEDDINGGEMMA_MAX_BODY_MB")?.unwrap_or(64);
         Ok(Self {
-            host: var("GEMINI_EMBED_HOST").unwrap_or_else(|| "0.0.0.0".into()),
+            host: var("EMBEDDINGGEMMA_HOST").unwrap_or_else(|| "0.0.0.0".into()),
             port,
             models,
-            model_dir: var(gemini_embed_core::MODEL_DIR_ENV)
+            model_dir: var(embeddinggemma_core::MODEL_DIR_ENV)
                 .map(std::path::PathBuf::from)
                 .unwrap_or_else(|| std::path::PathBuf::from("models")),
             options,
-            warmup: bool_var("GEMINI_EMBED_WARMUP", true)?,
-            log_requests: bool_var("GEMINI_EMBED_LOG_REQUESTS", true)?,
+            warmup: bool_var("EMBEDDINGGEMMA_WARMUP", true)?,
+            log_requests: bool_var("EMBEDDINGGEMMA_LOG_REQUESTS", true)?,
             max_body_bytes: max_body_mb.max(1) * 1024 * 1024,
         })
     }
@@ -703,21 +703,21 @@ mod tests {
     fn empty_state_resolves_nothing() {
         let state = AppState::new(Vec::new());
         assert!(state.model("").is_none());
-        assert!(state.model("gemini_embed::embeddinggemma-2").is_none());
+        assert!(state.model("embeddinggemma::embeddinggemma-2").is_none());
         assert!(state.loaded_ids().is_empty());
     }
 
     #[test]
     fn reads_the_environment() {
         let env: BTreeMap<&str, &str> = BTreeMap::from([
-            ("GEMINI_EMBED_MODELS", "270m, embeddinggemma-2"),
-            ("GEMINI_EMBED_DEVICE", "cuda:1"),
-            ("GEMINI_EMBED_DTYPE", "bf16"),
-            ("GEMINI_EMBED_MODALITIES", "text,audio"),
-            ("GEMINI_EMBED_IMAGE_TOKENS", "560"),
-            ("GEMINI_EMBED_VIDEO_MAX_FRAMES", "8"),
+            ("EMBEDDINGGEMMA_MODELS", "270m, embeddinggemma-2"),
+            ("EMBEDDINGGEMMA_DEVICE", "cuda:1"),
+            ("EMBEDDINGGEMMA_DTYPE", "bf16"),
+            ("EMBEDDINGGEMMA_MODALITIES", "text,audio"),
+            ("EMBEDDINGGEMMA_IMAGE_TOKENS", "560"),
+            ("EMBEDDINGGEMMA_VIDEO_MAX_FRAMES", "8"),
             ("PORT", "8080"),
-            ("GEMINI_EMBED_WARMUP", "off"),
+            ("EMBEDDINGGEMMA_WARMUP", "off"),
         ]);
         let c = ServerConfig::from_lookup(|k| env.get(k).map(|v| v.to_string())).unwrap();
         assert_eq!(c.models, vec!["270m", "embeddinggemma-2"]);
@@ -735,7 +735,7 @@ mod tests {
         assert_eq!(c.port, 8080);
         assert!(!c.warmup);
         assert_eq!(c.max_body_bytes, 64 << 20);
-        let bad = BTreeMap::from([("GEMINI_EMBED_MAX_BATCH_SIZE", "lots")]);
+        let bad = BTreeMap::from([("EMBEDDINGGEMMA_MAX_BATCH_SIZE", "lots")]);
         assert!(ServerConfig::from_lookup(|k| bad.get(k).map(|v| v.to_string())).is_err());
     }
 }

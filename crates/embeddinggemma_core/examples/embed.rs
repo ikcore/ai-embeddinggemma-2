@@ -2,17 +2,17 @@
 //! print the pairwise cosine scores (or the vectors as JSON).
 //!
 //! ```text
-//! cargo run --release -p gemini_embed_core --example embed -- \
+//! cargo run --release -p embeddinggemma_core --example embed -- \
 //!     --task query "a red bicycle" --image bike.jpg --audio bell.wav
-//! cargo run --release --features cuda -p gemini_embed_core --example embed -- --device cuda --json "text"
-//! cargo run --release --features mlx  -p gemini_embed_core --example embed -- --device mlx "text"
+//! cargo run --release --features cuda -p embeddinggemma_core --example embed -- --device cuda --json "text"
+//! cargo run --release --features mlx  -p embeddinggemma_core --example embed -- --device mlx "text"
 //! ```
 //!
 //! Every argument that is not an option is one text input; `--image`,
 //! `--audio`, `--video` and `--pdf` each add one media input (file path).
 //! Texts get the `--task` prompt (default `document`); media get none.
 
-use gemini_embed_core::{
+use embeddinggemma_core::{
     Content, ContentEmbeddingsRequest, DeviceRequest, Embedder, EmbedderOptions, EmbeddingTask,
 };
 use std::time::Instant;
@@ -26,10 +26,10 @@ fn main() {
 
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut model = "embeddinggemma-2".to_string();
-    let mut device: DeviceRequest = std::env::var("GEMINI_EMBED_DEVICE")
+    let mut device: DeviceRequest = std::env::var("EMBEDDINGGEMMA_DEVICE")
         .unwrap_or_default()
         .parse()?;
-    let mut dtype = std::env::var("GEMINI_EMBED_DTYPE").ok();
+    let mut dtype = std::env::var("EMBEDDINGGEMMA_DTYPE").ok();
     let mut task: Option<String> = None;
     let mut dimensions: Option<u32> = None;
     let mut json = false;
@@ -101,7 +101,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         device,
         dtype: dtype
             .as_deref()
-            .map(gemini_embed_core::parse_precision)
+            .map(embeddinggemma_core::parse_precision)
             .transpose()?,
         ..Default::default()
     };

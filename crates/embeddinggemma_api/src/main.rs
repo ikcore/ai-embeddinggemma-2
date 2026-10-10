@@ -1,22 +1,22 @@
-use gemini_embed_api::{AppState, ServerConfig, create_app};
-use gemini_embed_core::Embedder;
+use embeddinggemma_api::{AppState, ServerConfig, create_app};
+use embeddinggemma_core::Embedder;
 use std::sync::Arc;
 use std::time::Instant;
 
 const USAGE: &str = "\
 usage:
-  gemini_embed_api                    serve (configured by environment, see below)
-  gemini_embed_api download MODEL...  fetch models into the model directory and exit
-                                      (MODEL = embeddinggemma-2, a Hub repo[@rev] or a
-                                      directory; comma-separated lists are accepted too)
-  gemini_embed_api --help";
+  embeddinggemma_api                    serve (configured by environment, see below)
+  embeddinggemma_api download MODEL...  fetch models into the model directory and exit
+                                        (MODEL = embeddinggemma-2, a Hub repo[@rev] or a
+                                        directory; comma-separated lists are accepted too)
+  embeddinggemma_api --help";
 
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.iter().any(|a| a == "--help" || a == "-h") {
         println!(
-            "gemini_embed_api {}\n\n{USAGE}\n\nConfiguration (environment):\n{}",
+            "embeddinggemma_api {}\n\n{USAGE}\n\nConfiguration (environment):\n{}",
             env!("CARGO_PKG_VERSION"),
             ServerConfig::ENV_HELP
         );
@@ -33,7 +33,7 @@ async fn main() {
     }
 }
 
-/// `gemini_embed_api download embeddinggemma-2` → `./models/embeddinggemma-2/…`
+/// `embeddinggemma_api download embeddinggemma-2` → `./models/embeddinggemma-2/…`
 fn download(models: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let models: Vec<&str> = models
         .iter()
@@ -44,10 +44,10 @@ fn download(models: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     if models.is_empty() {
         return Err("download needs at least one model name".into());
     }
-    let dir = gemini_embed_core::model_dir();
+    let dir = embeddinggemma_core::model_dir();
     for name in models {
         eprintln!("fetching {name} into {}…", dir.display());
-        let target = gemini_embed_core::export_to_dir(name, &dir)?;
+        let target = embeddinggemma_core::export_to_dir(name, &dir)?;
         let bytes: u64 = std::fs::read_dir(&target)?
             .filter_map(|e| e.ok()?.metadata().ok())
             .map(|m| m.len())
@@ -60,9 +60,9 @@ fn download(models: &[String]) -> Result<(), Box<dyn std::error::Error>> {
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let config = ServerConfig::from_env()?;
     eprintln!(
-        "gemini_embed_api {} · backends: {} · device: {} · models: {} · model dir: {}",
+        "embeddinggemma_api {} · backends: {} · device: {} · models: {} · model dir: {}",
         env!("CARGO_PKG_VERSION"),
-        gemini_embed_core::compiled_backends().join(", "),
+        embeddinggemma_core::compiled_backends().join(", "),
         config.options.device,
         config.models.join(", "),
         config.model_dir.display()
@@ -96,7 +96,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         );
         if embedders.iter().any(|e| e.info().id == info.id) {
             return Err(format!(
-                "model `{}` is listed more than once in GEMINI_EMBED_MODELS (one variant per model)",
+                "model `{}` is listed more than once in EMBEDDINGGEMMA_MODELS (one variant per model)",
                 info.id
             )
             .into());

@@ -1,18 +1,18 @@
 [workspace]
 resolver = "2"
-members = ["crates/gemini_embed_core", "crates/gemini_embed_api"]
+members = ["crates/embeddinggemma_core", "crates/embeddinggemma_api"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
-repository = "https://github.com/ikcore/ai-gemini-embeddings-2"
+repository = "https://github.com/ikcore/ai-embeddinggemma-2"
 keywords = ["embeddings", "embeddinggemma", "multimodal", "candle", "mlx"]
 categories = ["science", "web-programming"]
 
 [workspace.dependencies]
-gemini_embed_core = { path = "crates/gemini_embed_core", version = "0.1.0" }
+embeddinggemma_core = { path = "crates/embeddinggemma_core", version = "0.1.0" }
 
 # Inference (CPU / CUDA / Metal)
 candle-core = "0.11"
@@ -20,7 +20,7 @@ candle-nn = "0.11"
 tokenizers = { version = "0.23", default-features = false, features = ["onig"] }
 hf-hub = { version = "0.4", default-features = false, features = ["ureq"] }
 
-# Inference (Apple MLX, macOS only — see crates/gemini_embed_core/Cargo.toml)
+# Inference (Apple MLX, macOS only — see crates/embeddinggemma_core/Cargo.toml)
 mlx-rs = { version = "=0.32.0", default-features = false }
 
 # Media
